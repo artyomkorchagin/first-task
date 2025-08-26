@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Lookup</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+    <div class="search-container">
+        <h1>Order Lookup</h1>
+        <form hx-get="/order" hx-target="#order-result" hx-indicator="#loading">
+            <input 
+            type="text" 
+            name="order_uid" 
+            class="search-input" 
+            placeholder="Enter Order ID (e.g., b563feb7b2b84b6test)" 
+            required
+            >
+            <button type="submit" class="search-button">Search Order</button>
+        </form>
+        <div id="loading" class="htmx-indicator loading hidden">
+            Loading order details...
+        </div>
+    </div>
+    
+    <div id="order-result"></div>
+    
+    <script>
+        // Show loading indicator
+        document.body.addEventListener('htmx:beforeRequest', function() {
+            document.getElementById('loading').classList.remove('hidden');
+        });
+        
+        document.body.addEventListener('htmx:afterOnLoad', function() {
+            document.getElementById('loading').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
