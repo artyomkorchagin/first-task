@@ -4,20 +4,22 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/artyomkorchagin/first-task/internal/middleware"
 	orderservice "github.com/artyomkorchagin/first-task/internal/service"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
 	orderService *orderservice.Service
+	logger       *zap.Logger
 }
 
-func NewHandler(orderService *orderservice.Service) *Handler {
+func NewHandler(orderService *orderservice.Service, logger *zap.Logger) *Handler {
 	return &Handler{
 		orderService: orderService,
+		logger:       logger,
 	}
 }
 
@@ -25,7 +27,8 @@ func (h *Handler) InitRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Static("/static", "../../static/")
-	router.Use(middleware.LoggerMiddleware())
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 
 	main := router.Group("/")
 	{

@@ -1,14 +1,22 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/artyomkorchagin/first-task/internal/config"
+	"github.com/artyomkorchagin/first-task/internal/logger"
 	orderpostgresql "github.com/artyomkorchagin/first-task/internal/repository/postgres/order"
+	"github.com/artyomkorchagin/first-task/internal/router"
 	orderservice "github.com/artyomkorchagin/first-task/internal/service"
+	"github.com/artyomkorchagin/first-task/pkg/helpers"
+	"go.uber.org/zap"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -23,21 +31,75 @@ import (
 //	@BasePath	/
 
 func main() {
-	db, err := sql.Open(config.GetDriver(), config.GetDSN())
-	if err != nil {
-		log.Fatal(err)
+
+	var zapLogger *zap.Logger
+	var err error
+
+	if helpers.GetEnv("ENV", "DEV") == "DEV" {
+		zapLogger, err = logger.NewDevelopmentLogger()
+	} else {
+		zapLogger, err = logger.NewLogger()
 	}
+
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		log.Fatal("Failed to initialize logger:", err)
+	}
+	defer zapLogger.Sync()
+
+	zapLogger.Info("Starting application")
+
+	db, err := sql.Open("pgx", config.GetDSN())
+	if err != nil {
+		zapLogger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+		zapLogger.Fatal("Failed to ping database", zap.Error(err))
 	}
+	zapLogger.Info("Connected to database")
 
-	log.Println("Connected to database")
+	if err := orderpostgresql.RunMigrations(db); err != nil {
+		zapLogger.Fatal("Failed to run up migration", zap.Error(err))
+	}
+	zapLogger.Info("Succesfully ran up migration")
+
 	repo := orderpostgresql.NewRepository(db)
 	service := orderservice.NewService(repo)
-	fmt.Print(service)
+
+	handler := router.NewHandler(service, zapLogger)
+	r := handler.InitRouter()
+
+	srv := &http.Server{
+		Addr:    helpers.GetEnv("SERVER_HOST", "") + ":" + helpers.GetEnv("SERVER_PORT", "3000"),
+		Handler: r,
+	}
+
+	go func() {
+		zapLogger.Info("Server starting", zap.String("port", helpers.GetEnv("SERVER_PORT", "3000")))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			zapLogger.Fatal("Server failed to start", zap.Error(err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	zapLogger.Info("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		zapLogger.Error("Server shutdown failed", zap.Error(err))
+	}
+
+	zapLogger.Info("Server exited")
+
+	if err := db.Close(); err != nil {
+		zapLogger.Error("Error closing database connection", zap.Error(err))
+	}
+	zapLogger.Info("Closed database connection")
+
+	zapLogger.Info("Program exited")
 }

@@ -1,4 +1,3 @@
-// producer.go
 package main
 
 import (
