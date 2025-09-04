@@ -16,6 +16,7 @@ import (
 	"github.com/artyomkorchagin/first-task/internal/router"
 	orderservice "github.com/artyomkorchagin/first-task/internal/service"
 	"github.com/artyomkorchagin/first-task/pkg/helpers"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -63,10 +64,20 @@ func main() {
 	}
 	zapLogger.Info("Succesfully ran up migration")
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: helpers.GetEnv("REDIS_PASSOWORD", ""),
+		DB:       0,
+	})
+
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		zapLogger.Fatal("Failed to connect to Redis", zap.Error(err))
+	}
+
 	repo := orderpostgresql.NewRepository(db)
 	service := orderservice.NewService(repo)
 
-	handler := router.NewHandler(service, zapLogger)
+	handler := router.NewHandler(service, rdb, zapLogger)
 	r := handler.InitRouter()
 
 	srv := &http.Server{

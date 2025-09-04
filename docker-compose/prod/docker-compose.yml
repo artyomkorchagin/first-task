@@ -1,4 +1,13 @@
 services:
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    entrypoint: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+
   kafka:
     image: bitnami/kafka:latest
     container_name: kafka
@@ -22,5 +31,6 @@ services:
       - kafka_data:/bitnami/kafka
   
 volumes:
+  redis_data:
   kafka_data:
     driver: local

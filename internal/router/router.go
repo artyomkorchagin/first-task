@@ -1,11 +1,11 @@
 package router
 
 import (
-	"log"
 	"net/http"
 
 	orderservice "github.com/artyomkorchagin/first-task/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
@@ -13,12 +13,14 @@ import (
 
 type Handler struct {
 	orderService *orderservice.Service
+	redis        *redis.Client
 	logger       *zap.Logger
 }
 
-func NewHandler(orderService *orderservice.Service, logger *zap.Logger) *Handler {
+func NewHandler(orderService *orderservice.Service, redis *redis.Client, logger *zap.Logger) *Handler {
 	return &Handler{
 		orderService: orderService,
+		redis:        redis,
 		logger:       logger,
 	}
 }
@@ -33,7 +35,7 @@ func (h *Handler) InitRouter() *gin.Engine {
 	main := router.Group("/")
 	{
 		main.GET("/", h.wrap(h.renderIndex))
-		main.GET("/orders/:id", h.wrap(h.getOrder))
+		main.GET("/orders/:id", h.wrap(h.readOrder))
 
 		main.GET("/status", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -41,6 +43,6 @@ func (h *Handler) InitRouter() *gin.Engine {
 
 		main.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
-	log.Println("Routes initialized")
+	h.logger.Info("Routes initialized")
 	return router
 }

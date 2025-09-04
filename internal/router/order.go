@@ -6,7 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handler) getOrder(c *gin.Context) error {
+func (h *Handler) readOrder(c *gin.Context) error {
+	return nil
+}
+
+func (h *Handler) createOrder(c *gin.Context) error {
 	return nil
 }
 
