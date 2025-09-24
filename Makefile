@@ -1,29 +1,22 @@
 include .env
 
 build:
-	docker compose build
+	docker compose --env-file ./.env build
 
 up:
-	docker compose up
+	docker compose --env-file ./.env up
 
 down:
-	docker compose down
+	docker compose --env-file ./.env down
 
 restart: down up
 
-db-up:
-	@echo "Running migrations..."
-	@goose -dir migrations postgres "$(DB_DSN)" up
+test:
+	@go test -v ./...
 
-db-down:
-	@echo "Rolling back migrations..."
-	@goose -dir migrations postgres "$(DB_DSN)" down
-
-db-status:
-	@goose -dir migrations postgres "$(DB_DSN)" status
-
-tests:
-	go test ./internal/repository/postgres/user/... -v
+cover:
+	@go test -v -coverprofile ./tests/cover.out ./...
+	@go tool cover -html ./tests/cover.out -o ./tests/cover.html
 	
 clean:
-	docker compose down -v --rmi all
+	docker compose --env-file ./.env down -v --rmi all

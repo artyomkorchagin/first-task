@@ -5,7 +5,6 @@ import (
 
 	orderservice "github.com/artyomkorchagin/first-task/internal/service"
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
@@ -13,14 +12,12 @@ import (
 
 type Handler struct {
 	orderService *orderservice.Service
-	redis        *redis.Client
 	logger       *zap.Logger
 }
 
-func NewHandler(orderService *orderservice.Service, redis *redis.Client, logger *zap.Logger) *Handler {
+func NewHandler(orderService *orderservice.Service, logger *zap.Logger) *Handler {
 	return &Handler{
 		orderService: orderService,
-		redis:        redis,
 		logger:       logger,
 	}
 }

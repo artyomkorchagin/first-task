@@ -11,12 +11,11 @@ import (
 	"time"
 
 	"github.com/artyomkorchagin/first-task/internal/config"
+	"github.com/artyomkorchagin/first-task/internal/infrastructure"
 	"github.com/artyomkorchagin/first-task/internal/logger"
 	orderpostgresql "github.com/artyomkorchagin/first-task/internal/repository/postgres/order"
 	"github.com/artyomkorchagin/first-task/internal/router"
 	orderservice "github.com/artyomkorchagin/first-task/internal/service"
-	"github.com/artyomkorchagin/first-task/pkg/helpers"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -32,11 +31,15 @@ import (
 //	@BasePath	/
 
 func main() {
-
-	var zapLogger *zap.Logger
 	var err error
 
-	if helpers.GetEnv("ENV", "DEV") == "DEV" {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal("Failed to load config:", err)
+	}
+	var zapLogger *zap.Logger
+
+	if cfg.LogMode == "DEV" {
 		zapLogger, err = logger.NewDevelopmentLogger()
 	} else {
 		zapLogger, err = logger.NewLogger()
@@ -48,45 +51,47 @@ func main() {
 	defer zapLogger.Sync()
 
 	zapLogger.Info("Starting application")
-
-	db, err := sql.Open("pgx", config.GetDSN())
+	zapLogger.Info("Connecting to database")
+	db, err := sql.Open("pgx", cfg.GetDSN())
 	if err != nil {
 		zapLogger.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
+	zapLogger.Info("Pinging database")
 	if err := db.Ping(); err != nil {
 		zapLogger.Fatal("Failed to ping database", zap.Error(err))
 	}
 	zapLogger.Info("Connected to database")
 
+	zapLogger.Info("Running migrations")
 	if err := orderpostgresql.RunMigrations(db); err != nil {
 		zapLogger.Fatal("Failed to run up migration", zap.Error(err))
 	}
 	zapLogger.Info("Succesfully ran up migration")
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: helpers.GetEnv("REDIS_PASSOWORD", ""),
-		DB:       0,
-	})
-
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		zapLogger.Fatal("Failed to connect to Redis", zap.Error(err))
+	zapLogger.Info("Connecting to redis")
+	rAddr := cfg.Redis.Host + cfg.Redis.Port
+	rdb, err := infrastructure.NewRedisClient(rAddr, cfg.Redis.Password)
+	if err != nil {
+		zapLogger.Fatal("Failed to connect to redis", zap.Error(err))
 	}
 
-	repo := orderpostgresql.NewRepository(db)
-	service := orderservice.NewService(repo)
+	zapLogger.Info("Connected to redis")
 
-	handler := router.NewHandler(service, rdb, zapLogger)
+	walletRepo := orderpostgresql.NewRepository(db)
+	walletSvc := orderservice.NewService(walletRepo, rdb, zapLogger)
+
+	handler := router.NewHandler(walletSvc, zapLogger)
 	r := handler.InitRouter()
 
+	port := cfg.Server.Port
 	srv := &http.Server{
-		Addr:    helpers.GetEnv("SERVER_HOST", "") + ":" + helpers.GetEnv("SERVER_PORT", "3000"),
+		Addr:    cfg.Server.Host + ":" + port,
 		Handler: r,
 	}
 
 	go func() {
-		zapLogger.Info("Server starting", zap.String("port", helpers.GetEnv("SERVER_PORT", "3000")))
+		zapLogger.Info("Server starting", zap.String("port", port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			zapLogger.Fatal("Server failed to start", zap.Error(err))
 		}
@@ -98,7 +103,7 @@ func main() {
 
 	zapLogger.Info("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
@@ -110,7 +115,6 @@ func main() {
 	if err := db.Close(); err != nil {
 		zapLogger.Error("Error closing database connection", zap.Error(err))
 	}
-	zapLogger.Info("Closed database connection")
 
-	zapLogger.Info("Program exited")
+	zapLogger.Info("Shutdown completed")
 }
