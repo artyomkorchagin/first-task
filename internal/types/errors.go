@@ -38,7 +38,9 @@ var (
 
 var (
 	ErrOrderNotFound    = errors.New("order not found")
+	ErrDeliveryNotFound = errors.New("delivery not found")
+	ErrPaymentNotFound  = errors.New("payment not found")
+	ErrItemsNotFound    = errors.New("items not found")
 	ErrConcurrentUpdate = errors.New("concurrent update detected, retry required")
-	ErrInvalidOperation = errors.New("invalid operation type, must be DEPOSIT or WITHDRAW")
 	ErrDB               = errors.New("database error")
 )

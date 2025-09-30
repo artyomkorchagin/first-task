@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS orders (
-    order_uid TEXT PRIMARY KEY,
+    order_uuid TEXT PRIMARY KEY,
     track_number TEXT NOT NULL,
     entry TEXT,
     locale TEXT,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 
 CREATE TABLE IF NOT EXISTS delivery (
-    order_uid TEXT PRIMARY KEY REFERENCES orders(order_uid) ON DELETE CASCADE,
+    order_uuid TEXT PRIMARY KEY REFERENCES orders(order_uuid) ON DELETE CASCADE,
     name TEXT NOT NULL,
     phone TEXT,
     zip TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS delivery (
 );
 
 CREATE TABLE IF NOT EXISTS payment (
-    order_uid TEXT PRIMARY KEY REFERENCES orders(order_uid) ON DELETE CASCADE,
+    order_uuid TEXT PRIMARY KEY REFERENCES orders(order_uuid) ON DELETE CASCADE,
     transaction TEXT NOT NULL,
     request_id TEXT,
     currency TEXT,
@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS payment (
 );
 
 CREATE TABLE IF NOT EXISTS items (
-    id SERIAL PRIMARY KEY,
-    order_uid TEXT REFERENCES orders(order_uid) ON DELETE CASCADE,
+    order_uuid TEXT PRIMARY KEY REFERENCES orders(order_uuid) ON DELETE CASCADE,
     chrt_id BIGINT,
     track_number TEXT,
     price INTEGER,

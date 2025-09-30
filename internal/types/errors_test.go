@@ -26,7 +26,6 @@ func TestHTTPErrors_ErrorMethod(t *testing.T) {
 }
 
 func TestErrorConstants(t *testing.T) {
-	assert.Equal(t, "invalid operation type, must be DEPOSIT or WITHDRAW", types.ErrInvalidOperation.Error())
 	assert.Equal(t, "concurrent update detected, retry required", types.ErrConcurrentUpdate.Error())
 	assert.Equal(t, "database error", types.ErrDB.Error())
 }
