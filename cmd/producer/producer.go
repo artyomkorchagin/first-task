@@ -22,7 +22,7 @@ func main() {
 	defer writer.Close()
 
 	order := types.Order{
-		OrderUID:    "b563feb7b2b84b6test",
+		OrderUUID:   "b563feb7b2b84b6test",
 		TrackNumber: "WBILMTESTTRACK",
 		Entry:       "WBIL",
 		Delivery: types.Delivery{
@@ -78,7 +78,7 @@ func main() {
 
 	err = writer.WriteMessages(context.Background(),
 		kafka.Message{
-			Key:   []byte(order.OrderUID),
+			Key:   []byte(order.OrderUUID),
 			Value: value,
 		},
 	)
@@ -87,5 +87,5 @@ func main() {
 	}
 
 	fmt.Printf("Order sent to Kafka (topic: %s)\n", topic)
-	fmt.Printf("Order UID: %s\n", order.OrderUID)
+	fmt.Printf("Order UID: %s\n", order.OrderUUID)
 }
