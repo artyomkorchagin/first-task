@@ -1,8 +1,11 @@
 package router
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 
+	"github.com/artyomkorchagin/first-task/internal/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,8 +21,14 @@ func (h *Handler) readOrder(c *gin.Context) error {
 	return nil
 }
 
-func (h *Handler) createOrder(c *gin.Context) error {
-
+func (h *Handler) CreateOrderKafka(ctx context.Context, msg []byte) error {
+	order := &types.Order{}
+	if err := json.Unmarshal(msg, order); err != nil {
+		return err
+	}
+	if err := h.orderService.CreateOrder(ctx, order); err != nil {
+		return err
+	}
 	return nil
 }
 

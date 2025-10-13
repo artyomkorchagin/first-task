@@ -1,0 +1,905 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cmd: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/artyomkorchagin/first-task/cmd/main.go (0.0%)</option>
+				
+				<option value="file1">github.com/artyomkorchagin/first-task/cmd/producer/producer.go (0.0%)</option>
+				
+				<option value="file2">github.com/artyomkorchagin/first-task/internal/config/config.go (89.3%)</option>
+				
+				<option value="file3">github.com/artyomkorchagin/first-task/internal/infrastructure/redis.go (0.0%)</option>
+				
+				<option value="file4">github.com/artyomkorchagin/first-task/internal/logger/logger.go (100.0%)</option>
+				
+				<option value="file5">github.com/artyomkorchagin/first-task/internal/repository/postgres/order/CreateOrder.go (0.0%)</option>
+				
+				<option value="file6">github.com/artyomkorchagin/first-task/internal/repository/postgres/order/ReadOrder.go (0.0%)</option>
+				
+				<option value="file7">github.com/artyomkorchagin/first-task/internal/repository/postgres/order/repo.go (16.7%)</option>
+				
+				<option value="file8">github.com/artyomkorchagin/first-task/internal/router/handlerFunc.go (0.0%)</option>
+				
+				<option value="file9">github.com/artyomkorchagin/first-task/internal/router/order.go (0.0%)</option>
+				
+				<option value="file10">github.com/artyomkorchagin/first-task/internal/router/router.go (0.0%)</option>
+				
+				<option value="file11">github.com/artyomkorchagin/first-task/internal/service/CreateOrder.go (0.0%)</option>
+				
+				<option value="file12">github.com/artyomkorchagin/first-task/internal/service/ReadOrder.go (0.0%)</option>
+				
+				<option value="file13">github.com/artyomkorchagin/first-task/internal/service/service.go (0.0%)</option>
+				
+				<option value="file14">github.com/artyomkorchagin/first-task/internal/types/errors.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "context"
+        "database/sql"
+        "log"
+        "net/http"
+        "os"
+        "os/signal"
+        "syscall"
+        "time"
+
+        "github.com/artyomkorchagin/first-task/internal/config"
+        "github.com/artyomkorchagin/first-task/internal/infrastructure"
+        "github.com/artyomkorchagin/first-task/internal/logger"
+        orderpostgresql "github.com/artyomkorchagin/first-task/internal/repository/postgres/order"
+        "github.com/artyomkorchagin/first-task/internal/router"
+        orderservice "github.com/artyomkorchagin/first-task/internal/service"
+        "go.uber.org/zap"
+
+        _ "github.com/jackc/pgx/v5/stdlib"
+)
+
+//        @title                        WB First Task
+//        @version                1.0
+
+//        @contact.name        Artyom Korchagin
+//        @contact.email        artyomkorchagin333@gmail.com
+
+//        @host                localhost:3000
+//        @BasePath        /
+
+func main() <span class="cov0" title="0">{
+        var err error
+
+        cfg, err := config.LoadConfig()
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to load config:", err)
+        }</span>
+        <span class="cov0" title="0">var zapLogger *zap.Logger
+
+        if cfg.LogMode == "DEV" </span><span class="cov0" title="0">{
+                zapLogger, err = logger.NewDevelopmentLogger()
+        }</span> else<span class="cov0" title="0"> {
+                zapLogger, err = logger.NewLogger()
+        }</span>
+
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to initialize logger:", err)
+        }</span>
+        <span class="cov0" title="0">defer zapLogger.Sync()
+
+        zapLogger.Info("Starting application")
+        zapLogger.Info("Connecting to database")
+        db, err := sql.Open("pgx", cfg.GetDSN())
+        if err != nil </span><span class="cov0" title="0">{
+                zapLogger.Fatal("Failed to connect to database", zap.Error(err))
+        }</span>
+
+        <span class="cov0" title="0">zapLogger.Info("Pinging database")
+        if err := db.Ping(); err != nil </span><span class="cov0" title="0">{
+                zapLogger.Fatal("Failed to ping database", zap.Error(err))
+        }</span>
+        <span class="cov0" title="0">zapLogger.Info("Connected to database")
+
+        zapLogger.Info("Running migrations")
+        if err := orderpostgresql.RunMigrations(db); err != nil </span><span class="cov0" title="0">{
+                zapLogger.Fatal("Failed to run up migration", zap.Error(err))
+        }</span>
+        <span class="cov0" title="0">zapLogger.Info("Succesfully ran up migration")
+
+        zapLogger.Info("Connecting to redis")
+        rAddr := cfg.Redis.Host + cfg.Redis.Port
+        rdb, err := infrastructure.NewRedisClient(rAddr, cfg.Redis.Password)
+        if err != nil </span><span class="cov0" title="0">{
+                zapLogger.Fatal("Failed to connect to redis", zap.Error(err))
+        }</span>
+
+        <span class="cov0" title="0">zapLogger.Info("Connected to redis")
+
+        walletRepo := orderpostgresql.NewRepository(db)
+        walletSvc := orderservice.NewService(walletRepo, rdb, zapLogger)
+
+        handler := router.NewHandler(walletSvc, zapLogger)
+        r := handler.InitRouter()
+
+        port := cfg.Server.Port
+        srv := &amp;http.Server{
+                Addr:    cfg.Server.Host + ":" + port,
+                Handler: r,
+        }
+
+        go func() </span><span class="cov0" title="0">{
+                zapLogger.Info("Server starting", zap.String("port", port))
+                if err := srv.ListenAndServe(); err != nil &amp;&amp; err != http.ErrServerClosed </span><span class="cov0" title="0">{
+                        zapLogger.Fatal("Server failed to start", zap.Error(err))
+                }</span>
+        }()
+
+        <span class="cov0" title="0">quit := make(chan os.Signal, 1)
+        signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+        &lt;-quit
+
+        zapLogger.Info("Shutting down server...")
+
+        ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+        defer cancel()
+
+        if err := srv.Shutdown(ctx); err != nil </span><span class="cov0" title="0">{
+                zapLogger.Error("Server shutdown failed", zap.Error(err))
+        }</span>
+
+        <span class="cov0" title="0">zapLogger.Info("Server exited")
+
+        if err := db.Close(); err != nil </span><span class="cov0" title="0">{
+                zapLogger.Error("Error closing database connection", zap.Error(err))
+        }</span>
+
+        <span class="cov0" title="0">zapLogger.Info("Shutdown completed")</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package main
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "log"
+
+        "github.com/artyomkorchagin/first-task/internal/types"
+        "github.com/segmentio/kafka-go"
+)
+
+func main() <span class="cov0" title="0">{
+        topic := "orders"
+        brokerAddress := "0.0.0.0:9092"
+
+        writer := &amp;kafka.Writer{
+                Addr:     kafka.TCP(brokerAddress),
+                Topic:    topic,
+                Balancer: &amp;kafka.LeastBytes{},
+        }
+        defer writer.Close()
+
+        order := types.Order{
+                OrderUUID:   "b563feb7b2b84b6test",
+                TrackNumber: "WBILMTESTTRACK",
+                Entry:       "WBIL",
+                Delivery: types.Delivery{
+                        Name:    "Test Testov",
+                        Phone:   "+9720000000",
+                        Zip:     "2639809",
+                        City:    "Kiryat Mozkin",
+                        Address: "Ploshad Mira 15",
+                        Region:  "Kraiot",
+                        Email:   "test@gmail.com",
+                },
+                Payment: types.Payment{
+                        Transaction:  "b563feb7b2b84b6test",
+                        RequestID:    "",
+                        Currency:     "USD",
+                        Provider:     "wbpay",
+                        Amount:       1817,
+                        PaymentDt:    1637907727,
+                        Bank:         "alpha",
+                        DeliveryCost: 1500,
+                        GoodsTotal:   317,
+                        CustomFee:    0,
+                },
+                Items: []types.Item{
+                        {
+                                ChrtID:      9934930,
+                                TrackNumber: "WBILMTESTTRACK",
+                                Price:       453,
+                                Rid:         "ab4219087a764ae0btest",
+                                Name:        "Mascaras",
+                                Sale:        30,
+                                Size:        "0",
+                                TotalPrice:  317,
+                                NmID:        2389212,
+                                Brand:       "Vivienne Sabo",
+                                Status:      202,
+                        },
+                },
+                Locale:            "en",
+                InternalSignature: "dfgfd",
+                CustomerID:        "test",
+                DeliveryService:   "meest",
+                Shardkey:          "9",
+                SmID:              99,
+                DateCreated:       "2021-11-26T06:22:19Z",
+                OofShard:          "1",
+        }
+
+        value, err := json.Marshal(order)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to encode order to JSON:", err)
+        }</span>
+
+        <span class="cov0" title="0">err = writer.WriteMessages(context.Background(),
+                kafka.Message{
+                        Key:   []byte(order.OrderUUID),
+                        Value: value,
+                },
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal("Failed to write message to Kafka:", err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Printf("Order sent to Kafka (topic: %s)\n", topic)
+        fmt.Printf("Order UID: %s\n", order.OrderUUID)</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package config
+
+import (
+        "fmt"
+
+        "github.com/spf13/viper"
+)
+
+type Config struct {
+        DB      DBConfig     `mapstructure:",squash"`
+        Server  ServerConfig `mapstructure:",squash"`
+        Redis   RedisConfig  `mapstructure:",squash"`
+        LogMode string       `mapstructure:"LOG_MODE"`
+}
+
+type DBConfig struct {
+        Host     string `mapstructure:"DB_HOST"`
+        Port     int    `mapstructure:"DB_PORT"`
+        User     string `mapstructure:"DB_USER"`
+        Password string `mapstructure:"DB_PASSWORD"`
+        Name     string `mapstructure:"DB_NAME"`
+        SSLMode  string `mapstructure:"DB_SSLMODE"`
+}
+
+type ServerConfig struct {
+        Host string `mapstructure:"SERVER_HOST"`
+        Port string `mapstructure:"SERVER_PORT"`
+}
+
+type RedisConfig struct {
+        Host     string `mapstructure:"REDIS_HOST"`
+        Port     string `mapstructure:"REDIS_PORT"`
+        Password string `mapstructure:"REDIS_PASSWORD"`
+}
+
+func LoadConfig() (*Config, error) <span class="cov8" title="1">{
+        viper.SetConfigType("env")
+        viper.AddConfigPath(".")
+        if err := viper.ReadInConfig(); err != nil </span><span class="cov8" title="1">{
+                if _, ok := err.(viper.ConfigFileNotFoundError); !ok </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to read config: %w", err)
+                }</span>
+        }
+
+        <span class="cov8" title="1">viper.AutomaticEnv()
+
+        var cfg Config
+        if err := viper.Unmarshal(&amp;cfg); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := cfg.Validate(); err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("invalid config: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return &amp;cfg, nil</span>
+}
+
+func (cfg *Config) GetDSN() string <span class="cov8" title="1">{
+        return fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
+                cfg.DB.Host,
+                cfg.DB.Port,
+                cfg.DB.Name,
+                cfg.DB.User,
+                cfg.DB.Password,
+                cfg.DB.SSLMode)
+}</span>
+
+func (cfg *Config) Validate() error <span class="cov8" title="1">{
+        if cfg.DB.Host == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("DB_HOST is required")
+        }</span>
+        <span class="cov8" title="1">if cfg.DB.Password == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("DB_PASSWORD is required")
+        }</span>
+        <span class="cov8" title="1">if cfg.DB.SSLMode == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("DB_SSLMODE is required")
+        }</span>
+        <span class="cov8" title="1">if cfg.DB.Host == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("DB_HOST is required")
+        }</span>
+        <span class="cov8" title="1">if cfg.DB.User == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("DB_USER is required")
+        }</span>
+        <span class="cov8" title="1">if cfg.DB.Name == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("DB_NAME is required")
+        }</span>
+        <span class="cov8" title="1">if cfg.Server.Port == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("SERVER_PORT is required")
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package infrastructure
+
+import (
+        "context"
+
+        "github.com/redis/go-redis/v9"
+)
+
+func NewRedisClient(addr, pass string) (*redis.Client, error) <span class="cov0" title="0">{
+        rdb := redis.NewClient(&amp;redis.Options{
+                Addr:     addr,
+                Password: pass,
+                DB:       0,
+        })
+
+        if _, err := rdb.Ping(context.Background()).Result(); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return rdb, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package logger
+
+import (
+        "go.uber.org/zap"
+        "go.uber.org/zap/zapcore"
+)
+
+func NewLogger() (*zap.Logger, error) <span class="cov8" title="1">{
+        config := zap.NewProductionConfig()
+        config.EncoderConfig.TimeKey = "timestamp"
+        config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+        config.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+
+        return config.Build()
+}</span>
+
+func NewDevelopmentLogger() (*zap.Logger, error) <span class="cov8" title="1">{
+        config := zap.NewDevelopmentConfig()
+        config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+        return config.Build()
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package orderpostgresql
+
+import (
+        "context"
+
+        "github.com/artyomkorchagin/first-task/internal/types"
+)
+
+func (r *Repository) CreateOrder(ctx context.Context, o *types.Order) error <span class="cov0" title="0">{
+
+        tx, err := r.db.BeginTx(ctx, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer tx.Rollback()
+
+        _, err = r.db.ExecContext(ctx, `
+                INSERT INTO orders VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `, o.OrderUUID, o.TrackNumber, o.Entry, o.Locale, o.InternalSignature,
+                o.CustomerID, o.DeliveryService, o.Shardkey, o.SmID, o.DateCreated, o.OofShard)
+        if err != nil </span><span class="cov0" title="0">{
+                return types.ErrDB
+        }</span>
+
+        <span class="cov0" title="0">_, err = r.db.ExecContext(ctx, `
+                INSERT INTO delivery VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, o.OrderUUID, o.Delivery.Name, o.Delivery.Phone, o.Delivery.Zip,
+                o.Delivery.City, o.Delivery.Address, o.Delivery.Region, o.Delivery.Email)
+        if err != nil </span><span class="cov0" title="0">{
+                return types.ErrDB
+        }</span>
+
+        <span class="cov0" title="0">_, err = r.db.ExecContext(ctx, `
+                INSERT INTO payment VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `, o.OrderUUID, o.Payment.Transaction, o.Payment.RequestID, o.Payment.Currency,
+                o.Payment.Provider, o.Payment.Amount, o.Payment.PaymentDt, o.Payment.Bank,
+                o.Payment.DeliveryCost, o.Payment.GoodsTotal, o.Payment.CustomFee)
+        if err != nil </span><span class="cov0" title="0">{
+                return types.ErrDB
+        }</span>
+
+        <span class="cov0" title="0">for _, item := range o.Items </span><span class="cov0" title="0">{
+                if _, err = r.db.ExecContext(ctx, `
+                        INSERT INTO items VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                `, o.OrderUUID, item.ChrtID, item.TrackNumber, item.Price, item.Rid,
+                        item.Name, item.Sale, item.Size, item.TotalPrice,
+                        item.NmID, item.Brand, item.Status); err != nil </span><span class="cov0" title="0">{
+                        return types.ErrDB
+                }</span>
+        }
+        <span class="cov0" title="0">tx.Commit()
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package orderpostgresql
+
+import (
+        "context"
+
+        "github.com/artyomkorchagin/first-task/internal/types"
+)
+
+func (r *Repository) ReadOrder(ctx context.Context, orderID string) (*types.Order, error) <span class="cov0" title="0">{
+        var (
+                order    types.Order
+                delivery types.Delivery
+                payment  types.Payment
+                items    []types.Item
+        )
+        tx, err := r.db.BeginTx(ctx, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">defer tx.Rollback()
+
+        err = tx.QueryRowContext(ctx, `
+                SELECT from orders WHERE order_uid = $1
+        `, orderID).Scan(&amp;order)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, types.ErrOrderNotFound
+        }</span>
+
+        <span class="cov0" title="0">err = tx.QueryRowContext(ctx, `
+                SELECT from delivery WHERE order_uid = $1
+        `, orderID).Scan(&amp;delivery)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, types.ErrDeliveryNotFound
+        }</span>
+
+        <span class="cov0" title="0">err = tx.QueryRowContext(ctx, `
+                SELECT from payment WHERE order_uid = $1
+        `, orderID).Scan(&amp;payment)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, types.ErrPaymentNotFound
+        }</span>
+
+        <span class="cov0" title="0">rows, err := tx.QueryContext(ctx, `
+                SELECT from items WHERE order_uid = $1
+        `, orderID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, types.ErrItemsNotFound
+        }</span>
+        <span class="cov0" title="0">for rows.Next() </span><span class="cov0" title="0">{
+                var item types.Item
+                if err := rows.Scan(&amp;item); err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+                <span class="cov0" title="0">items = append(items, item)</span>
+        }
+
+        <span class="cov0" title="0">tx.Commit()
+        order.Delivery = delivery
+        order.Payment = payment
+        order.Items = items
+        return &amp;order, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package orderpostgresql
+
+import (
+        "database/sql"
+        "fmt"
+
+        "github.com/pressly/goose"
+)
+
+type Repository struct {
+        db *sql.DB
+}
+
+func NewRepository(db *sql.DB) *Repository <span class="cov8" title="1">{
+        return &amp;Repository{
+                db: db,
+        }
+}</span>
+
+func RunMigrations(db *sql.DB) error <span class="cov0" title="0">{
+        if err := goose.SetDialect("postgres"); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to set dialect: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if err := goose.Up(db, "migrations"); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to run migrations: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package router
+
+import (
+        "net/http"
+
+        "github.com/artyomkorchagin/first-task/internal/types"
+        "github.com/gin-gonic/gin"
+        "go.uber.org/zap"
+)
+
+type handlerFunc func(c *gin.Context) error
+
+func (h *Handler) wrap(fn handlerFunc) gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                err := fn(c)
+                if err != nil </span><span class="cov0" title="0">{
+                        if httpErr, ok := err.(types.HTTPError); ok </span><span class="cov0" title="0">{
+                                h.logger.Error("error", zap.Error(httpErr))
+                                c.JSON(httpErr.Code, gin.H{"error": httpErr.Err.Error()})
+                        }</span> else<span class="cov0" title="0"> {
+                                h.logger.Error("error", zap.Error(err))
+                                c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                        }</span>
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package router
+
+import (
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+)
+
+func (h *Handler) readOrder(c *gin.Context) error <span class="cov0" title="0">{
+        orderID := c.Param("id")
+
+        order, err := h.orderService.ReadOrder(c, orderID)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, order)
+
+        return nil</span>
+}
+
+func (h *Handler) createOrder(c *gin.Context) error <span class="cov0" title="0">{
+
+        return nil
+}</span>
+
+func (h *Handler) renderIndex(c *gin.Context) error <span class="cov0" title="0">{
+        c.HTML(http.StatusOK, "index.html", gin.H{})
+        return nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package router
+
+import (
+        "net/http"
+
+        orderservice "github.com/artyomkorchagin/first-task/internal/service"
+        "github.com/gin-gonic/gin"
+        swaggerFiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
+        "go.uber.org/zap"
+)
+
+type Handler struct {
+        orderService *orderservice.Service
+        logger       *zap.Logger
+}
+
+func NewHandler(orderService *orderservice.Service, logger *zap.Logger) *Handler <span class="cov0" title="0">{
+        return &amp;Handler{
+                orderService: orderService,
+                logger:       logger,
+        }
+}</span>
+
+func (h *Handler) InitRouter() *gin.Engine <span class="cov0" title="0">{
+        gin.SetMode(gin.ReleaseMode)
+        router := gin.New()
+        router.Static("/static", "../../static/")
+        router.Use(gin.Logger())
+        router.Use(gin.Recovery())
+
+        main := router.Group("/")
+        </span><span class="cov0" title="0">{
+                main.GET("/", h.wrap(h.renderIndex))
+                main.GET("/orders/:id", h.wrap(h.readOrder))
+
+                main.GET("/status", func(c *gin.Context) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusOK, gin.H{"status": "ok"})
+                }</span>)
+
+                <span class="cov0" title="0">main.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))</span>
+        }
+        <span class="cov0" title="0">h.logger.Info("Routes initialized")
+        return router</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package orderservice
+
+import (
+        "context"
+        "fmt"
+
+        "github.com/artyomkorchagin/first-task/internal/types"
+        "github.com/google/uuid"
+        "go.uber.org/zap"
+)
+
+func (s *Service) CreateOrder(ctx context.Context, o *types.Order) error <span class="cov0" title="0">{
+        logger := s.logger.With(zap.String("wallet_uuid", o.OrderUUID))
+        if o.OrderUUID == "" </span><span class="cov0" title="0">{
+                return types.ErrBadRequest(fmt.Errorf("orderUUID is empty"))
+        }</span>
+
+        <span class="cov0" title="0">_, err := uuid.Parse(o.OrderUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Warn("CreateOrder: invalid UUID",
+                        zap.Error(err))
+                return types.ErrBadRequest(fmt.Errorf("orderUUID is not valid: %w", err))
+        }</span>
+
+        <span class="cov0" title="0">if err := s.repo.CreateOrder(ctx, o); err != nil </span><span class="cov0" title="0">{
+                logger.Error("CreateOrder: failed to create order",
+                        zap.Error(err))
+                return err
+        }</span>
+        <span class="cov0" title="0">logger.Info("CreateOrder: successfully created order", zap.String("orderUUID", o.OrderUUID))
+
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package orderservice
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "time"
+
+        "github.com/artyomkorchagin/first-task/internal/types"
+        "github.com/google/uuid"
+        "go.uber.org/zap"
+)
+
+func (s *Service) ReadOrder(ctx context.Context, orderUUID string) (*types.Order, error) <span class="cov0" title="0">{
+        var order *types.Order
+        logger := s.logger.With(zap.String("wallet_uuid", orderUUID))
+        if orderUUID == "" </span><span class="cov0" title="0">{
+                return nil, types.ErrBadRequest(fmt.Errorf("orderUUID is empty"))
+        }</span>
+
+        <span class="cov0" title="0">_, err := uuid.Parse(orderUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Warn("ReadOrder: invalid UUID",
+                        zap.Error(err))
+                return nil, types.ErrBadRequest(fmt.Errorf("orderUUID is not valid: %w", err))
+        }</span>
+
+        <span class="cov0" title="0">key := fmt.Sprintf("order:%s", orderUUID)
+        if val, err := s.redis.Get(ctx, key).Result(); err == nil </span><span class="cov0" title="0">{
+                if err := json.Unmarshal([]byte(val), &amp;order); err != nil </span><span class="cov0" title="0">{
+                        logger.Warn("ReadOrder: unmarshal error")
+                }</span>
+                <span class="cov0" title="0">return order, nil</span>
+        }
+
+        <span class="cov0" title="0">order, err = s.repo.ReadOrder(ctx, orderUUID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, types.ErrNotFound(err)
+        }</span>
+
+        <span class="cov0" title="0">encodedOrder, err := json.Marshal(order)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Warn("ReadOrder: failed to marshal order",
+                        zap.Error(err))
+        }</span> else<span class="cov0" title="0"> {
+                if err := s.redis.Set(ctx, key, encodedOrder, 15*time.Second).Err(); err != nil </span><span class="cov0" title="0">{
+                        logger.Warn("ReadOrder: failed to set cache",
+                                zap.String("cache_key", key),
+                                zap.Error(err))
+                }</span> else<span class="cov0" title="0"> {
+                        logger.Debug("GetBalance: balance cached",
+                                zap.ByteString("order", encodedOrder),
+                                zap.Duration("ttl", 15*time.Second))
+                }</span>
+        }
+
+        <span class="cov0" title="0">return order, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package orderservice
+
+import (
+        "github.com/redis/go-redis/v9"
+        "go.uber.org/zap"
+)
+
+type Service struct {
+        repo   ReadWriter
+        redis  *redis.Client
+        logger *zap.Logger
+}
+
+func NewService(repo ReadWriter, redis *redis.Client, logger *zap.Logger) *Service <span class="cov0" title="0">{
+        return &amp;Service{
+                repo:   repo,
+                redis:  redis,
+                logger: logger,
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package types
+
+import (
+        "errors"
+        "net/http"
+)
+
+// @name HTTPError
+// @description Standard error response returned by the API
+// @property Code
+// @type integer
+// @description HTTP status code
+// @property Err
+// @type error
+// @description Human-readable error message
+type HTTPErrorSwaggerWrapper HTTPError
+
+// HTTPError represents an error response returned by the API.
+// This is used to standardize error responses across the application.
+type HTTPError struct {
+        // HTTP status code
+        Code int `json:"code"`
+
+        // Error message
+        Err error `json:"error"`
+}
+
+func (e HTTPError) Error() string <span class="cov8" title="1">{
+        return e.Err.Error()
+}</span>
+
+var (
+        ErrBadRequest          = func(err error) HTTPError <span class="cov8" title="1">{ return HTTPError{Code: http.StatusBadRequest, Err: err} }</span>
+        ErrNotFound            = func(err error) HTTPError <span class="cov8" title="1">{ return HTTPError{Code: http.StatusNotFound, Err: err} }</span>
+        ErrInternalServerError = func(err error) HTTPError <span class="cov8" title="1">{ return HTTPError{Code: http.StatusInternalServerError, Err: err} }</span>
+        ErrConflict            = func(err error) HTTPError <span class="cov8" title="1">{ return HTTPError{Code: http.StatusConflict, Err: err} }</span>
+)
+
+var (
+        ErrOrderNotFound    = errors.New("order not found")
+        ErrDeliveryNotFound = errors.New("delivery not found")
+        ErrPaymentNotFound  = errors.New("payment not found")
+        ErrItemsNotFound    = errors.New("items not found")
+        ErrConcurrentUpdate = errors.New("concurrent update detected, retry required")
+        ErrDB               = errors.New("database error")
+)
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

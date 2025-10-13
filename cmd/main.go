@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/artyomkorchagin/first-task/internal/config"
 	"github.com/artyomkorchagin/first-task/internal/infrastructure"
 	"github.com/artyomkorchagin/first-task/internal/logger"
@@ -78,6 +79,16 @@ func main() {
 
 	zapLogger.Info("Connected to redis")
 
+	worker, err := infrastructure.ConnectConsumer(cfg.Kafka)
+	if err != nil {
+		zapLogger.Fatal("Failed to connect consumer to kafka", zap.Error(err))
+	}
+
+	consumer, err := worker.ConsumePartition(cfg.Kafka.Topic, 0, sarama.OffsetOldest)
+	if err != nil {
+		zapLogger.Fatal("Failed to consume partition", zap.Error(err))
+	}
+
 	walletRepo := orderpostgresql.NewRepository(db)
 	walletSvc := orderservice.NewService(walletRepo, rdb, zapLogger)
 
@@ -90,6 +101,29 @@ func main() {
 		Handler: r,
 	}
 
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		zapLogger.Info("Starting Kafka consumer...")
+		defer zapLogger.Info("Kafka consumer stopped")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case err := <-consumer.Errors():
+				zapLogger.Error("Recieved error from kafka", zap.Error(err))
+			case msg := <-consumer.Messages():
+				zapLogger.Info("Got message", zap.String("topic", msg.Topic),
+					zap.Int32("partition", msg.Partition),
+					zap.Int64("offset", msg.Offset))
+				handler.CreateOrderKafka(ctx, msg.Value)
+			}
+		}
+	}()
+
 	go func() {
 		zapLogger.Info("Server starting", zap.String("port", port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -97,20 +131,25 @@ func main() {
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
-
 	zapLogger.Info("Shutting down server...")
+	cancel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		zapLogger.Error("Server shutdown failed", zap.Error(err))
 	}
-
 	zapLogger.Info("Server exited")
+
+	if err := consumer.Close(); err != nil {
+		zapLogger.Error("Failed to close Kafka consumer", zap.Error(err))
+	}
+
+	if err := worker.Close(); err != nil {
+		zapLogger.Error("Failed to close Kafka worker", zap.Error(err))
+	}
 
 	if err := db.Close(); err != nil {
 		zapLogger.Error("Error closing database connection", zap.Error(err))

@@ -9,7 +9,7 @@ FROM alpine:3.18
 WORKDIR /app
 COPY --from=builder /app/order-service /app/order-service
 COPY  ./migrations /app/migrations
-COPY ./docs /app/docs
+#COPY ./docs /app/docs
 COPY ./.env /app/.env
 EXPOSE 3000
 CMD ["/app/order-service"]

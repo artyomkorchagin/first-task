@@ -10,6 +10,7 @@ type Config struct {
 	DB      DBConfig     `mapstructure:",squash"`
 	Server  ServerConfig `mapstructure:",squash"`
 	Redis   RedisConfig  `mapstructure:",squash"`
+	Kafka   KafkaConfig  `mapstructure:",squash"`
 	LogMode string       `mapstructure:"LOG_MODE"`
 }
 
@@ -31,6 +32,12 @@ type RedisConfig struct {
 	Host     string `mapstructure:"REDIS_HOST"`
 	Port     string `mapstructure:"REDIS_PORT"`
 	Password string `mapstructure:"REDIS_PASSWORD"`
+}
+
+type KafkaConfig struct {
+	Brokers   []string `mapstructure:"KAFKA_BROKERS"`
+	Topic     string   `mapstructure:"KAFKA_TOPIC"`
+	ReturnErr bool     `mapstructure:"KAFKA_RETURN_ERROR"`
 }
 
 func LoadConfig() (*Config, error) {
