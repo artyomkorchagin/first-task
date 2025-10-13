@@ -528,28 +528,28 @@ func (r *Repository) ReadOrder(ctx context.Context, orderID string) (*types.Orde
         <span class="cov0" title="0">defer tx.Rollback()
 
         err = tx.QueryRowContext(ctx, `
-                SELECT from orders WHERE order_uid = $1
+                SELECT from orders WHERE order_uuid = $1
         `, orderID).Scan(&amp;order)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, types.ErrOrderNotFound
         }</span>
 
         <span class="cov0" title="0">err = tx.QueryRowContext(ctx, `
-                SELECT from delivery WHERE order_uid = $1
+                SELECT from delivery WHERE order_uuid = $1
         `, orderID).Scan(&amp;delivery)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, types.ErrDeliveryNotFound
         }</span>
 
         <span class="cov0" title="0">err = tx.QueryRowContext(ctx, `
-                SELECT from payment WHERE order_uid = $1
+                SELECT from payment WHERE order_uuid = $1
         `, orderID).Scan(&amp;payment)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, types.ErrPaymentNotFound
         }</span>
 
         <span class="cov0" title="0">rows, err := tx.QueryContext(ctx, `
-                SELECT from items WHERE order_uid = $1
+                SELECT from items WHERE order_uuid = $1
         `, orderID)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, types.ErrItemsNotFound
@@ -720,7 +720,7 @@ import (
 )
 
 func (s *Service) CreateOrder(ctx context.Context, o *types.Order) error <span class="cov0" title="0">{
-        logger := s.logger.With(zap.String("wallet_uuid", o.OrderUUID))
+        logger := s.logger.With(zap.String("order_uuid", o.OrderUUID))
         if o.OrderUUID == "" </span><span class="cov0" title="0">{
                 return types.ErrBadRequest(fmt.Errorf("orderUUID is empty"))
         }</span>
@@ -758,7 +758,7 @@ import (
 
 func (s *Service) ReadOrder(ctx context.Context, orderUUID string) (*types.Order, error) <span class="cov0" title="0">{
         var order *types.Order
-        logger := s.logger.With(zap.String("wallet_uuid", orderUUID))
+        logger := s.logger.With(zap.String("order_uuid", orderUUID))
         if orderUUID == "" </span><span class="cov0" title="0">{
                 return nil, types.ErrBadRequest(fmt.Errorf("orderUUID is empty"))
         }</span>

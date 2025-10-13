@@ -20,3 +20,6 @@ cover:
 	
 clean:
 	docker compose --env-file ./.env down -v --rmi all
+	
+clean-volumes:
+	docker volume prune -f

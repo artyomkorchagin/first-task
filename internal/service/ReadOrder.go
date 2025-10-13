@@ -13,7 +13,7 @@ import (
 
 func (s *Service) ReadOrder(ctx context.Context, orderUUID string) (*types.Order, error) {
 	var order *types.Order
-	logger := s.logger.With(zap.String("wallet_uuid", orderUUID))
+	logger := s.logger.With(zap.String("order_uuid", orderUUID))
 	if orderUUID == "" {
 		return nil, types.ErrBadRequest(fmt.Errorf("orderUUID is empty"))
 	}

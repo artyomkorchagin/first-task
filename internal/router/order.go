@@ -10,8 +10,7 @@ import (
 )
 
 func (h *Handler) readOrder(c *gin.Context) error {
-	orderID := c.Param("id")
-
+	orderID := c.Query("id")
 	order, err := h.orderService.ReadOrder(c, orderID)
 	if err != nil {
 		return err

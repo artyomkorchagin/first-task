@@ -41,8 +41,7 @@ type KafkaConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
+	viper.SetConfigFile(".env")
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("failed to read config: %w", err)

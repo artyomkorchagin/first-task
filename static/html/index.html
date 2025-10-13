@@ -13,7 +13,7 @@
         <form hx-get="/order" hx-target="#order-result" hx-indicator="#loading">
             <input 
             type="text" 
-            name="order_uid" 
+            name="id" 
             class="search-input" 
             placeholder="Enter Order ID (e.g., b563feb7b2b84b6test)" 
             required
@@ -28,7 +28,6 @@
     <div id="order-result"></div>
     
     <script>
-        // Show loading indicator
         document.body.addEventListener('htmx:beforeRequest', function() {
             document.getElementById('loading').classList.remove('hidden');
         });

@@ -25,14 +25,15 @@ func NewHandler(orderService *orderservice.Service, logger *zap.Logger) *Handler
 func (h *Handler) InitRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	router.Static("/static", "../../static/")
+	router.LoadHTMLGlob("static/html/*")
+	router.Static("/static", "./static/")
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
 	main := router.Group("/")
 	{
 		main.GET("/", h.wrap(h.renderIndex))
-		main.GET("/orders/:id", h.wrap(h.readOrder))
+		main.GET("/order", h.wrap(h.readOrder))
 
 		main.GET("/status", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})

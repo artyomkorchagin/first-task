@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Service) CreateOrder(ctx context.Context, o *types.Order) error {
-	logger := s.logger.With(zap.String("wallet_uuid", o.OrderUUID))
+	logger := s.logger.With(zap.String("order_uuid", o.OrderUUID))
 	if o.OrderUUID == "" {
 		return types.ErrBadRequest(fmt.Errorf("orderUUID is empty"))
 	}

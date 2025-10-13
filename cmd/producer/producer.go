@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	topic := "orders"
-	brokerAddress := "0.0.0.0:9092"
+	topic := "order_topic"
+	brokerAddress := "localhost:9092"
 
 	writer := &kafka.Writer{
 		Addr:     kafka.TCP(brokerAddress),
@@ -22,7 +22,7 @@ func main() {
 	defer writer.Close()
 
 	order := types.Order{
-		OrderUUID:   "b563feb7b2b84b6test",
+		OrderUUID:   "c1d5628b-4482-4307-8f7c-85e43bd0f6f7",
 		TrackNumber: "WBILMTESTTRACK",
 		Entry:       "WBIL",
 		Delivery: types.Delivery{

@@ -11,5 +11,6 @@ COPY --from=builder /app/order-service /app/order-service
 COPY  ./migrations /app/migrations
 #COPY ./docs /app/docs
 COPY ./.env /app/.env
+COPY ./static /app/static
 EXPOSE 3000
 CMD ["/app/order-service"]
