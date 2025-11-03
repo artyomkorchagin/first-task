@@ -1,33 +1,26 @@
 services:
-  redpanda:
-    image: docker.redpanda.com/redpandadata/redpanda:v23.2.15
-    container_name: redpanda
-    command:
-      - redpanda
-      - start
-      - --smp
-      - '1'
-      - --reserve-memory
-      - 0M
-      - --overprovisioned
-      - --node-id
-      - '0'
-      - --kafka-addr
-      - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
-      - --advertise-kafka-addr
-      - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+  broker:
+    image: apache/kafka:latest
+    container_name: broker
+    networks:
+      - kafkanet
     ports:
       - 9092:9092
-      - 29092:29092
-    volumes:
-      - redpanda_data:/var/lib/redpanda/data
-    healthcheck:
-      test: ["CMD", "rpk", "cluster", "info", "--brokers", "redpanda:29092"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: EXTERNAL://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092,INTERNAL://broker:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+    
   db:
     image: postgres:17
     container_name: order_db
@@ -39,6 +32,8 @@ services:
       - 5433:5432
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - kafkanet
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
@@ -58,11 +53,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      redpanda:
-        condition: service_healthy
     restart: unless-stopped
-    environment:
-      - KAFKA_BROKERS=redpanda:29092
+    networks:
+      - kafkanet
     deploy:
       resources:
         limits:
@@ -81,6 +74,8 @@ services:
       - 6379:6379
     volumes:
       - redis_data:/data
+    networks:
+      - kafkanet
     command: redis-server --appendonly yes
     restart: unless-stopped
     healthcheck:
@@ -92,4 +87,7 @@ services:
 volumes:
   db_data:
   redis_data:
-  redpanda_data:
+
+networks:
+  kafkanet:
+    name: kafkanet
