@@ -3,37 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Lookup</title>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="/static/js/htmx.min.js"></script>
+    <script src="/static/js/path-params.js"></script>
+    <title>WB Task</title>
     <link rel="stylesheet" href="/static/css/index.css">
 </head>
 <body>
-    <div class="search-container">
-        <h1>Order Lookup</h1>
-        <form hx-get="/order" hx-target="#order-result" hx-indicator="#loading">
+    <h1>Order Lookup</h1>
+
+    <div class="search-container" hx-ext="path-params">
+        <form onsubmit="event.preventDefault();"> 
             <input 
-            type="text" 
-            name="id" 
-            class="search-input" 
-            placeholder="Enter Order ID (e.g., b563feb7b2b84b6test)" 
-            required
+                type="text" 
+                id="order_uid_input" 
+                class="search-input" 
+                placeholder="Enter Order ID (e.g., b563feb7b2b84b6test)" 
+                required
             >
-            <button type="submit" class="search-button">Search Order</button>
+            <button 
+                type="button" 
+                hx-get="/order/{order_uid}" 
+                hx-vals='js:{"order_uid": getUUID()}'
+                hx-target="#order-result" 
+                hx-indicator="#loading-indicator"
+                class="search-button"
+            >
+                Search Order
+            </button>
+            <span id="loading-indicator" class="htmx-indicator">Loading...</span>
         </form>
-        <div id="loading" class="htmx-indicator loading hidden">
-            Loading order details...
-        </div>
     </div>
-    
+
     <div id="order-result"></div>
-    
+
+    <div id="global-error" class="error" style="display: none;"></div>
+
     <script>
-        document.body.addEventListener('htmx:beforeRequest', function() {
-            document.getElementById('loading').classList.remove('hidden');
+
+        function getUUID() {
+            return document.getElementById("order_uid_input").value;
+        }
+
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            console.error("HTMX Response Error:", evt.detail.xhr.status, evt.detail.xhr.statusText);
+            document.getElementById('global-error').textContent = "An error occurred while fetching the order.";
+            document.getElementById('global-error').style.display = 'block';
+            document.getElementById('order-result').innerHTML = '';
         });
-        
-        document.body.addEventListener('htmx:afterOnLoad', function() {
-            document.getElementById('loading').classList.add('hidden');
+
+        document.body.addEventListener('htmx:sendError', function(evt) {
+            console.error("HTMX Send Error:", evt.detail);
+            document.getElementById('global-error').textContent = "A network error occurred.";
+            document.getElementById('global-error').style.display = 'block';
+            document.getElementById('order-result').innerHTML = '';
+        });
+
+        document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+            document.getElementById('global-error').style.display = 'none';
         });
     </script>
 </body>

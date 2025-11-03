@@ -1,0 +1,73 @@
+<div class="section">
+    <h3>Order Details for: {{ .Order.OrderUUID }}</h3>
+    <div class="section">
+        <h3>Order Summary</h3>
+        <div class="info-row"><span class="info-label">Order ID:</span> <span class="info-value">{{ .Order.OrderUUID }}</span></div>
+        <div class="info-row"><span class="info-label">Track Number:</span> <span class="info-value">{{ .Order.TrackNumber }}</span></div>
+        <div class="info-row"><span class="info-label">Entry Point:</span> <span class="info-value">{{ .Order.Entry }}</span></div>
+        <div class="info-row"><span class="info-label">Locale:</span> <span class="info-value">{{ .Order.Locale }}</span></div>
+        <div class="info-row"><span class="info-label">Date Created:</span> <span class="info-value">{{ .Order.DateCreated }}</span></div>
+        <div class="info-row"><span class="info-label">Customer ID:</span> <span class="info-value">{{ .Order.CustomerID }}</span></div>
+        <div class="info-row"><span class="info-label">Delivery Service:</span> <span class="info-value">{{ .Order.DeliveryService }}</span></div>
+        <div class="info-row"><span class="info-label">Shard Key:</span> <span class="info-value">{{ .Order.Shardkey }}</span></div>
+        <div class="info-row"><span class="info-label">SM ID:</span> <span class="info-value">{{ .Order.SmID }}</span></div>
+        <div class="info-row"><span class="info-label">OOF Shard:</span> <span class="info-value">{{ .Order.OofShard }}</span></div>
+    </div>
+
+    <div class="section">
+        <h3>Delivery Information</h3>
+        <div class="info-row"><span class="info-label">Name:</span> <span class="info-value">{{ .Order.Delivery.Name }}</span></div>
+        <div class="info-row"><span class="info-label">Phone:</span> <span class="info-value">{{ .Order.Delivery.Phone }}</span></div>
+        <div class="info-row"><span class="info-label">Email:</span> <span class="info-value">{{ .Order.Delivery.Email }}</span></div>
+        <div class="info-row"><span class="info-label">ZIP Code:</span> <span class="info-value">{{ .Order.Delivery.Zip }}</span></div>
+        <div class="info-row"><span class="info-label">City:</span> <span class="info-value">{{ .Order.Delivery.City }}</span></div>
+        <div class="info-row"><span class="info-label">Region:</span> <span class="info-value">{{ .Order.Delivery.Region }}</span></div>
+        <div class="info-row"><span class="info-label">Address:</span> <span class="info-value">{{ .Order.Delivery.Address }}</span></div>
+    </div>
+
+    <div class="section">
+        <h3>Payment Information</h3>
+        <div class="info-row"><span class="info-label">Transaction ID:</span> <span class="info-value">{{ .Order.Payment.Transaction }}</span></div>
+        <div class="info-row"><span class="info-label">Request ID:</span> <span class="info-value">{{ .Order.Payment.RequestID }}</span></div>
+        <div class="info-row"><span class="info-label">Currency:</span> <span class="info-value">{{ .Order.Payment.Currency }}</span></div>
+        <div class="info-row"><span class="info-label">Provider:</span> <span class="info-value">{{ .Order.Payment.Provider }}</span></div>
+        <div class="info-row"><span class="info-label">Amount:</span> <span class="info-value">{{ .Order.Payment.Amount }}</span></div>
+        <div class="info-row"><span class="info-label">Payment Date (Unix):</span> <span class="info-value">{{ .Order.Payment.PaymentDt }}</span></div>
+        <div class="info-row"><span class="info-label">Bank:</span> <span class="info-value">{{ .Order.Payment.Bank }}</span></div>
+        <div class="info-row"><span class="info-label">Delivery Cost:</span> <span class="info-value">{{ .Order.Payment.DeliveryCost }}</span></div>
+        <div class="info-row"><span class="info-label">Goods Total:</span> <span class="info-value">{{ .Order.Payment.GoodsTotal }}</span></div>
+        <div class="info-row"><span class="info-label">Custom Fee:</span> <span class="info-value">{{ .Order.Payment.CustomFee }}</span></div>
+    </div>
+
+    <div class="section">
+        <h3>Items</h3>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Brand</th>
+                    <th>Size</th>
+                    <th>Price</th>
+                    <th>Total Price</th>
+                    <th>SKU (NmID)</th>
+                    <th>ChrtID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Order.Items }}
+                <tr>
+                    <td>{{ .Name }}</td>
+                    <td>{{ .Brand }}</td>
+                    <td>{{ .Size }}</td>
+                    <td>{{ .Price }}</td>
+                    <td>{{ .TotalPrice }}</td>
+                    <td>{{ .NmID }}</td>
+                    <td>{{ .ChrtID }}</td>
+                    <td>{{ .Status }}</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
