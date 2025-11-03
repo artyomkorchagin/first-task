@@ -33,7 +33,7 @@ func (h *Handler) InitRouter() *gin.Engine {
 	main := router.Group("/")
 	{
 		main.GET("/", h.wrap(h.renderIndex))
-		main.GET("/order", h.wrap(h.readOrder))
+		main.GET("/order/:order_uid", h.wrap(h.readOrder))
 
 		main.GET("/status", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
