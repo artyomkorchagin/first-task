@@ -10,12 +10,15 @@ import (
 )
 
 func (h *Handler) readOrder(c *gin.Context) error {
-	orderID := c.Query("id")
+	orderID := c.Param("order_uid")
 	order, err := h.orderService.ReadOrder(c, orderID)
 	if err != nil {
 		return err
 	}
-	c.JSON(http.StatusOK, order)
+
+	c.HTML(http.StatusOK, "order.html", gin.H{
+		"Order": order,
+	})
 
 	return nil
 }
@@ -32,6 +35,6 @@ func (h *Handler) CreateOrderKafka(ctx context.Context, msg []byte) error {
 }
 
 func (h *Handler) renderIndex(c *gin.Context) error {
-	c.HTML(http.StatusOK, "index.html", gin.H{})
+	c.HTML(http.StatusOK, "index.html", nil)
 	return nil
 }
