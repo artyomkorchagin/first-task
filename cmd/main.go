@@ -108,7 +108,15 @@ func main() {
 
 	go func() {
 		zapLogger.Info("Starting Kafka consumer...")
-		defer zapLogger.Info("Kafka consumer stopped")
+		defer func() {
+			if err = consumer.Close(); err != nil {
+				zapLogger.Error("Failed to close consumer", zap.Error(err))
+			}
+			if err = worker.Close(); err != nil {
+				zapLogger.Error("Failed to close worker", zap.Error(err))
+			}
+			zapLogger.Info("Kafka consumer stopped")
+		}()
 		for {
 			select {
 			case <-ctx.Done():
@@ -142,14 +150,6 @@ func main() {
 		zapLogger.Error("Server shutdown failed", zap.Error(err))
 	}
 	zapLogger.Info("Server exited")
-
-	if err := consumer.Close(); err != nil {
-		zapLogger.Error("Failed to close Kafka consumer", zap.Error(err))
-	}
-
-	if err := worker.Close(); err != nil {
-		zapLogger.Error("Failed to close Kafka worker", zap.Error(err))
-	}
 
 	if err := db.Close(); err != nil {
 		zapLogger.Error("Error closing database connection", zap.Error(err))
